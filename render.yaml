@@ -1,0 +1,20 @@
+# Render blueprint for a free, sleep-when-idle demo (voice analysis off).
+# Secrets are not stored here: Render asks for them in the dashboard (sync: false).
+services:
+  - type: web
+    name: tarangai
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-light.txt
+    startCommand: python -m tarangai
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: VOICE_EMOTION
+        value: "0"
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: SARVAM_AI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

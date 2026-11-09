@@ -104,6 +104,19 @@ The class means are in the expected order for both dimensions. The mid-arousal c
 (std 0.12), so arousal labels near the cut-offs are noisy. Recordings are stored in
 `bench/data/` (git-ignored, private).
 
+## Free demo hosting (voice analysis off)
+Locally the bot uses polling, which works from any laptop. For a host that sleeps when idle (for example
+Render's free web service), the bot switches to **webhook mode** when a public URL is set: Telegram sends
+each message to the URL, which wakes the host. Voice analysis is turned off there, because the free
+instance is too small for torch and the voice model.
+
+- `requirements-light.txt`: install without torch or transformers.
+- `render.yaml`: Render blueprint (free plan, `VOICE_EMOTION=0`). Secrets are entered in the dashboard.
+- Webhook mode starts when `WEBHOOK_URL` (or Render's `RENDER_EXTERNAL_URL`) is set, listens on `PORT`, and uses a
+  secret path and secret header derived from the bot token. Repeated deliveries of the same update are ignored.
+- The first message after the host has slept waits for the wake-up (Render documents about one minute).
+  Telegram holds undelivered messages and retries.
+
 ## Layout
 - `tarangai/stt/`: speech-to-text and language routing (adapted from Sahayi)
 - `tarangai/nlp/`: Sarvam chat client and the sentiment classifier

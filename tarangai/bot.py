@@ -1,12 +1,15 @@
 """Telegram bot. Voice note or text in, transcript + normalised English + sentiment out."""
 import asyncio
+import hashlib
 import logging
 import os
+from collections import OrderedDict
 
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.constants import ChatAction
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import (ApplicationBuilder, ApplicationHandlerStop, CommandHandler, ContextTypes, MessageHandler,
+                          TypeHandler, filters)
 
 from .pipeline import process
 
@@ -80,19 +83,47 @@ async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await reply(update, context, audio=(data, "voice.ogg", getattr(media, "duration", None)))
 
 
+_SEEN: "OrderedDict[int, None]" = OrderedDict()
+
+
+async def drop_duplicates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Webhook mode: if the host was asleep, Telegram may redeliver an update it thinks timed out.
+    Remember recent update ids and skip repeats so one voice note is never processed twice."""
+    if update.update_id in _SEEN:
+        logging.info("Skipping duplicate update %s", update.update_id)
+        raise ApplicationHandlerStop
+    _SEEN[update.update_id] = None
+    while len(_SEEN) > 500:
+        _SEEN.popitem(last=False)
+
+
 def main() -> None:
     load_dotenv()
     token = os.getenv("TELEGRAM_TOKEN")
     if not token:
         raise SystemExit("TELEGRAM_TOKEN missing in .env")
     app = ApplicationBuilder().token(token).build()
+    app.add_handler(TypeHandler(Update, drop_duplicates), group=-1)
     app.add_handler(CommandHandler(["start", "help"], start))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, on_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     from .audio import load_model  # preload so the first English voice note is not slow
     load_model()
-    logging.info("tarangAI bot running")
-    app.run_polling()
+
+    # Webhook mode for hosts that sleep when idle (for example Render's free tier): Telegram sends each message
+    # to a public HTTPS URL, which wakes the host. Used only when a public URL is configured; otherwise polling.
+    public_url = (os.getenv("WEBHOOK_URL") or os.getenv("RENDER_EXTERNAL_URL") or "").strip()
+    if public_url:
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        path = os.getenv("WEBHOOK_PATH") or digest[:32]      # unguessable URL path
+        secret = os.getenv("WEBHOOK_SECRET") or digest[32:64]  # header Telegram sends; others are rejected
+        port = int(os.getenv("PORT", "8080"))
+        logging.info("tarangAI bot running in webhook mode on port %s", port)
+        app.run_webhook(listen="0.0.0.0", port=port, url_path=path,
+                        webhook_url=f"{public_url.rstrip('/')}/{path}", secret_token=secret)
+    else:
+        logging.info("tarangAI bot running (polling)")
+        app.run_polling()
 
 
 if __name__ == "__main__":
