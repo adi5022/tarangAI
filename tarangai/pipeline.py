@@ -9,7 +9,7 @@ def process(text: str = "", audio: tuple[bytes, str, float | None] | None = None
     """audio = (bytes, filename, duration_seconds). Returns transcript, language, sentiment,
     provider, seconds and error. `language` is only known for voice (from the STT routing)."""
     t0 = time.perf_counter()
-    out = {"transcript": "", "language": "", "sentiment": "", "provider": "", "error": ""}
+    out = {"transcript": "", "language": "", "sentiment": None, "provider": "", "error": ""}
 
     def done() -> dict:
         out["seconds"] = round(time.perf_counter() - t0, 2)

@@ -6,7 +6,9 @@ import re
 import requests
 
 URL = "https://api.sarvam.ai/v1/chat/completions"
-MODEL = os.environ.get("SARVAM_MODEL", "sarvam-105b")  # sarvam-m is deprecated and rejected by the API
+# sarvam-m is deprecated. The "-conversations" model answers directly; plain sarvam-105b spends small
+# max_tokens budgets on hidden reasoning and can return an empty answer. The API rejects reasoning_effort "none".
+MODEL = os.environ.get("SARVAM_MODEL", "sarvam-105b-conversations")
 
 
 def chat(system: str, user: str, temperature: float = 0.0, max_tokens: int = 600) -> str:
@@ -17,11 +19,11 @@ def chat(system: str, user: str, temperature: float = 0.0, max_tokens: int = 600
         URL,
         headers={"api-subscription-key": key.strip(), "Content-Type": "application/json"},
         json={"model": MODEL, "temperature": temperature, "max_tokens": max_tokens,
-              "reasoning_effort": "none",  # short, direct answers; no long thinking block
               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
         timeout=45,
     )
-    r.raise_for_status()
+    if not r.ok:  # surface Sarvam's own error message, not just the status code
+        raise RuntimeError(f"Sarvam chat {r.status_code}: {r.text[:300]}")
     text = r.json()["choices"][0]["message"]["content"] or ""
     return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()  # drop reasoning block if present
 

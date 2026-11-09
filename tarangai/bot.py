@@ -21,6 +21,7 @@ WELCOME = (
 )
 ERROR = "Sorry, something went wrong on my side. Please try again."
 ICON = {"positive": "🟢", "negative": "🔴", "neutral": "⚪"}
+EMOJI = {"joy": "😄", "love": "❤️", "surprise": "😲", "sadness": "😢", "anger": "😠", "fear": "😨", "disgust": "🤢", "none": "😐"}
 
 
 def format_reply(out: dict) -> str:
@@ -32,7 +33,11 @@ def format_reply(out: dict) -> str:
         return "\n".join(lines)
     if out["language"]:  # known for voice only
         lines.append(f"🌐 Language: {out['language']}")
-    lines.append(f"{ICON[out['sentiment']]} Sentiment: {out['sentiment']}")
+    s = out["sentiment"]
+    lines.append(f"{ICON[s['sentiment']]} Sentiment: {s['sentiment']} ({s['intensity']})")
+    lines.append(f"{EMOJI.get(s['emotion'], '')} Emotion: {s['emotion']}".strip())
+    if s["sarcastic"] == "yes":
+        lines.append("😏 Sarcasm detected")
     lines.append(f"⏱ {out['seconds']}s")
     return "\n".join(lines)
 
@@ -45,7 +50,7 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE, **kw) -> Non
         logging.exception("pipeline failed")
         await update.effective_message.reply_text(ERROR)
         return
-    logging.info("lang=%s sentiment=%s provider=%s %ss", out["language"] or "-", out["sentiment"] or "-",
+    logging.info("lang=%s sentiment=%s provider=%s %ss", out["language"] or "-", (out["sentiment"] or {}).get("sentiment", "-"),
                  out["provider"] or "-", out["seconds"])
     await update.effective_message.reply_text(format_reply(out))
 
