@@ -1,0 +1,6 @@
+python-telegram-bot>=22.0
+sarvamai>=0.1.44
+groq>=1.0
+requests
+python-dotenv
+soundfile

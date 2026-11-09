@@ -1,0 +1,81 @@
+"""Telegram bot. Voice note or text in, transcript + normalised English + sentiment out."""
+import asyncio
+import logging
+import os
+
+from dotenv import load_dotenv
+from telegram import Update
+from telegram.constants import ChatAction
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+
+from .pipeline import process
+
+logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)  # httpx URLs contain the bot token
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+WELCOME = (
+    "Hi, I'm tarangAI.\n\n"
+    "Send me a voice note or text in English or Malayalam-English (mixed) and I'll "
+    "transcribe it and give you the clean English version."
+)
+ERROR = "Sorry, something went wrong on my side. Please try again."
+
+
+def format_reply(out: dict) -> str:
+    lines = []
+    if out["transcript"]:  # always show what was heard, even if a later step failed
+        lines.append(f"🎙 You said: {out['transcript']}")
+    if out["error"]:
+        lines.append(f"⚠️ {out['error']}")
+        return "\n".join(lines)
+    lines.append(f"🌐 Language: {out['language'] or '-'}")
+    if out["english"] and out["english"] != out["transcript"]:
+        lines.append(f"🔤 English: {out['english']}")
+    if out["notes"]:
+        lines.append(f"📝 Notes: {out['notes']}")
+    lines.append(f"⏱ {out['seconds']}s")
+    return "\n".join(lines)
+
+
+async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE, **kw) -> None:
+    await context.bot.send_chat_action(update.effective_chat.id, ChatAction.TYPING)
+    try:
+        out = await asyncio.to_thread(process, **kw)
+    except Exception:
+        logging.exception("pipeline failed")
+        await update.effective_message.reply_text(ERROR)
+        return
+    logging.info("lang=%s provider=%s %ss", out["language"] or "-", out["provider"] or "-", out["seconds"])
+    await update.effective_message.reply_text(format_reply(out))
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(WELCOME)
+
+
+async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await reply(update, context, text=update.message.text or "")
+
+
+async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    media = update.message.voice or update.message.audio
+    data = bytes(await (await media.get_file()).download_as_bytearray())  # in memory, nothing saved to disk
+    await reply(update, context, audio=(data, "voice.ogg", getattr(media, "duration", None)))
+
+
+def main() -> None:
+    load_dotenv()
+    token = os.getenv("TELEGRAM_TOKEN")
+    if not token:
+        raise SystemExit("TELEGRAM_TOKEN missing in .env")
+    app = ApplicationBuilder().token(token).build()
+    app.add_handler(CommandHandler(["start", "help"], start))
+    app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, on_voice))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
+    logging.info("tarangAI bot running")
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
