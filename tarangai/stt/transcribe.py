@@ -20,6 +20,26 @@ MIME_BY_EXT = {
 }
 
 
+def groq_keys() -> list[str]:
+    """GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3 (same convention as Sahayi); any that are set, in order."""
+    names = ("GROQ_API_KEY", "GROQ_API_KEY_2", "GROQ_API_KEY_3")
+    return [v for v in ((os.environ.get(n) or "").strip() for n in names) if v]
+
+
+def with_groq_keys(call):
+    """Run call(client) with each configured Groq key until one works (a key may hit its daily limit)."""
+    keys = groq_keys()
+    if not keys:
+        raise RuntimeError("no Groq key set (GROQ_API_KEY, GROQ_API_KEY_2 or GROQ_API_KEY_3 in .env)")
+    err: Exception | None = None
+    for k in keys:
+        try:
+            return call(Groq(api_key=k))
+        except Exception as e:
+            err = e
+    raise err
+
+
 def guess_mime(filename: str) -> str:
     return MIME_BY_EXT.get(filename.rsplit(".", 1)[-1].lower(), "audio/wav")
 
@@ -85,14 +105,13 @@ def transcribe_audio(file_bytes: bytes, filename: str = "audio.wav", language: s
         text = r.json().get("transcript", "").strip()
         return (text, "sarvam", "") if text else ("", "sarvam", "Sarvam returned an empty transcript.")
 
-    key = os.environ.get("GROQ_API_KEY")
-    if not key:
-        return "", "none", "GROQ_API_KEY missing in .env"
     try:
-        buf = io.BytesIO(file_bytes)
-        buf.name = filename
-        t = Groq(api_key=key).audio.transcriptions.create(
-            file=(filename, buf), model="whisper-large-v3", language="en", response_format="json")
+        def _call(client):
+            buf = io.BytesIO(file_bytes)
+            buf.name = filename
+            return client.audio.transcriptions.create(
+                file=(filename, buf), model="whisper-large-v3", language="en", response_format="json")
+        t = with_groq_keys(_call)
         return t.text.strip(), "groq", ""
     except Exception as e:
         return "", "groq", f"Groq Whisper failed: {e}"
@@ -113,14 +132,13 @@ def trim_head(file_bytes: bytes, seconds: float = 8.0) -> bytes:
 def whisper_detect(file_bytes: bytes, filename: str = "audio.wav") -> tuple[str, str, str]:
     """One Groq Whisper call (language not pinned). Returns (language, text, error).
     Only 'english' is trusted; everything else is routed to Sarvam."""
-    key = os.environ.get("GROQ_API_KEY")
-    if not key:
-        return "", "", "GROQ_API_KEY missing in .env"
     try:
-        buf = io.BytesIO(file_bytes)
-        buf.name = filename
-        t = Groq(api_key=key).audio.transcriptions.create(
-            file=(filename, buf), model="whisper-large-v3", response_format="verbose_json")
+        def _call(client):
+            buf = io.BytesIO(file_bytes)
+            buf.name = filename
+            return client.audio.transcriptions.create(
+                file=(filename, buf), model="whisper-large-v3", response_format="verbose_json")
+        t = with_groq_keys(_call)
         return (getattr(t, "language", "") or "").strip().lower(), (t.text or "").strip(), ""
     except Exception as e:
         return "", "", f"Groq Whisper failed: {e}"

@@ -33,11 +33,18 @@ def format_reply(out: dict) -> str:
         return "\n".join(lines)
     if out["language"]:  # known for voice only
         lines.append(f"🌐 Language: {out['language']}")
-    s = out["sentiment"]
-    lines.append(f"{ICON[s['sentiment']]} Sentiment: {s['sentiment']} ({s['intensity']})")
+    s, fu, vo = out["sentiment"], out.get("fusion"), out.get("voice")
+    intensity = fu["intensity"] if fu else s["intensity"]  # intensity after voice adjustment, if any
+    lines.append(f"{ICON[s['sentiment']]} Sentiment: {s['sentiment']} ({intensity})")
     lines.append(f"{EMOJI.get(s['emotion'], '')} Emotion: {s['emotion']}".strip())
     if s["sarcastic"] == "yes":
         lines.append("😏 Sarcasm detected")
+    if vo:  # English voice only
+        lines.append(f"🎚 Voice: arousal {vo['arousal_level']} ({vo['arousal']:.2f}) · valence {vo['valence_level']} ({vo['valence']:.2f})")
+        if fu["intensity_changed_from"]:
+            lines.append(f"↕ Intensity adjusted by voice: {fu['intensity_changed_from']} → {fu['intensity']}")
+        if fu["flag"]:
+            lines.append(f"⚠️ {fu['flag']}")
     lines.append(f"⏱ {out['seconds']}s")
     return "\n".join(lines)
 
@@ -52,6 +59,10 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE, **kw) -> Non
         return
     logging.info("lang=%s sentiment=%s provider=%s %ss", out["language"] or "-", (out["sentiment"] or {}).get("sentiment", "-"),
                  out["provider"] or "-", out["seconds"])
+    if os.getenv("DEBUG_TRANSCRIPTS") == "1":  # opt-in only: transcripts are private messages
+        logging.info("DEBUG transcript=%r sentiment=%s voice=%s error=%s", out["transcript"], out["sentiment"],
+                     {k: round(v, 3) for k, v in (out["voice"] or {}).items() if isinstance(v, float)} or None,
+                     out["error"] or None)
     await update.effective_message.reply_text(format_reply(out))
 
 
@@ -78,6 +89,8 @@ def main() -> None:
     app.add_handler(CommandHandler(["start", "help"], start))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, on_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
+    from .audio import load_model  # preload so the first English voice note is not slow
+    load_model()
     logging.info("tarangAI bot running")
     app.run_polling()
 

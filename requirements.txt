@@ -4,3 +4,7 @@ groq>=1.0
 requests
 python-dotenv
 soundfile
+numpy
+scipy
+torch
+transformers

@@ -4,3 +4,6 @@ __pycache__/
 .venv/
 *.ogg
 *.wav
+
+# temporary calibration recordings and scores (private voice data)
+bench/data/

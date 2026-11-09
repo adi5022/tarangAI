@@ -3,6 +3,7 @@
 Adapted from Sahayi. Free-first: one Groq Whisper call listens first; if it says English, that
 transcript is used and Sarvam is never called. Whisper is trusted only for "English or not".
 """
+import logging
 import time
 
 from .transcribe import transcribe_audio, trim_head, whisper_detect
@@ -32,7 +33,11 @@ def detect_and_transcribe(file_bytes: bytes, filename: str = "voice.ogg", durati
     t0 = time.perf_counter()
     long_audio = (duration or len(file_bytes) / 4500) > 20
     probe, probe_name = (trim_head(file_bytes, 8.0), "head.wav") if long_audio else (file_bytes, filename)
-    wlang, wtext, _ = whisper_detect(probe, probe_name)
+    wlang, wtext, werr = whisper_detect(probe, probe_name)
+    if werr:  # without this, a broken Groq setup silently sends English audio to Sarvam
+        logging.warning("Whisper language check failed, falling back to Sarvam: %s", werr)
+    else:
+        logging.info("Whisper detected language=%s", wlang or "?")
 
     if wlang == "english" and wtext:
         text, provider = wtext, "groq"
