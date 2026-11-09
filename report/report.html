@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tarangAI: Multimodal Sentiment for English and Malayalam-English Speech</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap');
+  @page { size: A4; margin: 18mm 20mm 20mm 20mm; background: #f4ecd6;
+          @bottom-center { content: "tarangAI · project report · page " counter(page); font: 8.5pt 'Segoe UI', Arial, sans-serif; color: #7a6f55; } }
+  @page :first { @bottom-center { content: none; } }
+  :root { --paper:#f4ecd6; --ink:#2a2418; --muted:#6a5f45; --accent:#2b4f9e; --accent2:#2f7d6d; --line:#d6c9a3; --soft:#ebe0c3; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html { background: var(--paper); }
+  body { font: 10.5pt/1.55 'Segoe UI', Arial, sans-serif; color: var(--ink); margin: 0; background: var(--paper); }
+  @media screen { body { max-width: 210mm; margin: 0 auto; padding: 14mm 18mm; } }
+  h1,h2,h3 { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.25; }
+  h2 { font-size: 15pt; color: var(--accent); border-bottom: 2px solid var(--line); padding-bottom: 4px; margin: 26px 0 10px; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 16px 0 6px; color: var(--ink); break-after: avoid; }
+  p { margin: 6px 0 8px; text-align: justify; }
+  ul, ol { margin: 6px 0 10px 18px; padding: 0; } li { margin: 3px 0; }
+  code { font: 9pt Consolas, 'Courier New', monospace; background: var(--soft); padding: 1px 4px; border-radius: 3px; }
+  .cover { margin: 0 0 6px; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
+  .cover .tag { color: var(--accent2); letter-spacing: 2px; font-size: 9.5pt; font-weight: 600; text-transform: uppercase; }
+  .cover h1 { font-family: 'Oswald', 'Arial Narrow', Impact, sans-serif; font-weight: 600; font-size: 40pt; letter-spacing: 1px; margin: 2px 0 2px; color: var(--ink); }
+  .cover .sub { font-size: 13pt; color: var(--muted); margin-bottom: 12px; max-width: 160mm; line-height: 1.35; }
+  .cover table.team { width: auto; font-size: 10pt; margin: 6px 0 8px; break-inside: avoid; }
+  .cover table.team th { background: var(--accent); }
+  .cover table.team td { padding: 3px 12px 3px 7px; }
+  .cover .meta { color: var(--muted); font-size: 10pt; line-height: 1.7; }
+  .cover .meta b { color: var(--ink); }
+  .cover a, .small a { color: var(--accent); text-decoration: none; }
+  .box { background: var(--soft); border-left: 4px solid var(--accent); padding: 8px 12px; margin: 10px 0; border-radius: 3px; break-inside: avoid; }
+  .box.warn { border-left-color: #c47a14; background: #f3e4bd; }
+  .box.ok { border-left-color: var(--accent2); background: #e3e8cf; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; font-size: 9.2pt; break-inside: avoid; }
+  th { background: var(--accent); color: #fff; text-align: left; padding: 5px 7px; font-weight: 600; }
+  td { border-bottom: 1px solid var(--line); padding: 5px 7px; vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(255,250,235,0.55); }
+  .cap { font-size: 8.8pt; color: var(--muted); margin: 3px 0 12px; text-align: left; font-style: italic; }
+  figure { margin: 10px 0; break-inside: avoid; text-align: center; }
+  figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+  .figrow { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
+  .figrow figure { width: 66mm; flex: none; margin: 6px 0; }
+  .figrow img { width: 100%; }
+  .pos { color: #178a4a; font-weight: 600; } .neg { color: #c4302b; font-weight: 600; } .neu { color: #666; font-weight: 600; }
+  .pb { break-before: page; }
+  .small { font-size: 8.6pt; color: var(--muted); line-height: 1.4; }
+  ol.small { margin-top: 4px; margin-bottom: 4px; } ol.small li { margin: 1px 0; }
+  p.small { margin: 2px 0 0; }
+  .toc td { border: none; padding: 2px 6px; background: none !important; } .toc { width: 70%; font-size: 10.5pt; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="tag">Generative AI · End-Semester Mini Project</div>
+  <h1>tarangAI</h1>
+  <div class="sub">Multimodal sentiment analysis for English and Malayalam-English speech: reading what was said and how it was said</div>
+  <table class="team">
+    <tr><th>Team member</th><th>Roll no.</th></tr>
+    <tr><td>Adithyan RS</td><td>B23CS2109</td></tr>
+    <tr><td>Alona Biju</td><td>B23CS2113</td></tr>
+    <tr><td>Alvin Binu</td><td>B23CS2114</td></tr>
+    <tr><td>Darsan M</td><td>B23CS2125</td></tr>
+  </table>
+  <div class="meta">
+    <div><b>Course:</b> Generative AI &nbsp;·&nbsp; <b>Date:</b> 9 November 2026 &nbsp;·&nbsp; <b>Delivered as:</b> a Telegram bot (Python)</div>
+    <div><b>Source code:</b> <a href="https://github.com/adi5022/tarangAI">https://github.com/adi5022/tarangAI</a></div>
+    <div><b>Models and services:</b> Sarvam AI (Saaras, chat model) · Groq-hosted Whisper · audEERING wav2vec2 (Hugging Face)</div>
+  </div>
+</section>
+
+<!-- ===================== ABSTRACT ===================== -->
+<h2 style="margin-top:14px">Abstract</h2>
+<p>People increasingly send voice notes in a mix of English and Malayalam, yet most sentiment tools assume clean English text.
+They also ignore a second signal that humans use constantly: the voice itself. <b>tarangAI</b> is a Telegram bot that accepts a
+voice note or a typed message, transcribes it with a language-aware speech pipeline, and returns a structured reading of the
+speaker's state: sentiment (positive, negative or neutral), a main emotion, an intensity level and a sarcasm flag.</p>
+<p>The pipeline routes English speech to Whisper and Malayalam or code-mixed speech to Sarvam Saaras, and runs sentiment analysis with a
+Sarvam chat model <i>directly on the original text</i>, with no translation step that could flatten slang or tone. For English
+voice notes, a pretrained Hugging Face speech-emotion model additionally estimates the <i>arousal</i> and <i>valence</i> of the voice. A small,
+transparent fusion layer uses these to refine intensity and to flag cases where the words and the voice disagree, such as
+cheerful delivery over negative words, a common sign of sarcasm. The voice cut-offs were calibrated on 25 recorded clips rather than guessed.</p>
+<p>Live tests showed correct transcripts, sentiment, emotion and sarcasm on four English voice notes, an end-to-end latency of about
+1.3 to 2.4 seconds per note, and a useful disagreement flag on a sarcastic sentence. The project also documents its limits: the
+voice model is English-trained and calibrated on one speaker, and no formal accuracy evaluation has been run yet.</p>
+
+<!-- ===================== MOTIVATION ===================== -->
+<h2>1. Motivation</h2>
+<p><b>Language reality.</b> Malayalam speakers routinely switch between Malayalam and English inside one sentence, and write
+Malayalam in Latin letters ("Manglish"): <i>"movie poli aanu, climax mass"</i>. Models built for formal English handle this poorly, and
+voice notes make it harder still, because speech recognition for code-mixed speech is a separate problem.</p>
+<p><b>Words are only half the message.</b> The sentence "I'm fine, everything is great" can be sincere, tired or bitterly sarcastic.
+A text-only classifier sees identical input in all three cases and must return the same answer. Figure 4 shows this happening in
+our own tests. People resolve the ambiguity from tone of voice: pitch, energy and pace. A system that only reads the transcript throws that away.</p>
+<p><b>Why this fits a generative-AI project.</b> The project composes several foundation models (speech-to-text, a large language model and a
+self-supervised speech encoder) into one working system, and the interesting engineering is in the glue: routing by language, constraining
+model output to a closed vocabulary, and fusing two modalities without letting either one silently override the other.</p>
+
+<h2>2. Problem statement</h2>
+<p>Build a system that, given a voice note or message in English or Malayalam-English, returns a reliable and
+<i>inspectable</i> estimate of sentiment, emotion, intensity and sarcasm; uses vocal cues where a suitable model exists; and exposes every
+decision (transcript, language, adjustments) to the user so errors can be traced.</p>
+<ul>
+<li><b>Inputs:</b> Telegram voice notes (OGG/Opus) and typed text in English, Malayalam script or Manglish.</li>
+<li><b>Outputs:</b> transcript, language, sentiment, emotion, intensity, sarcasm flag and, for English voice, voice arousal/valence with any adjustment made.</li>
+<li><b>Constraints:</b> low latency (a few seconds), low cost (free-tier APIs plus one local model), no translation step, and graceful degradation when a component is unavailable.</li>
+</ul>
+
+<h2>3. Use cases</h2>
+<table>
+<tr><th style="width:26%">Use case</th><th>How tarangAI helps</th></tr>
+<tr><td>Customer feedback in Kerala</td><td>Businesses receive voice and text complaints and praise in mixed Malayalam-English. Structured sentiment and emotion make triage and trend counting possible without reading every note.</td></tr>
+<tr><td>Support-call and voice-note triage</td><td>The intensity and the "words vs voice" flag surface calls where the customer says "okay" in a clearly frustrated voice.</td></tr>
+<tr><td>Sarcasm-aware moderation</td><td>Cheerful delivery over negative wording is flagged, which text-only filters miss.</td></tr>
+<tr><td>Student and course feedback</td><td>Short spoken feedback from students who are more comfortable speaking than typing, in their own mix of languages.</td></tr>
+<tr><td>Accessibility</td><td>People who prefer speaking, or who write Malayalam in Latin script, get the same analysis quality as typists in English.</td></tr>
+<tr><td>Research baseline</td><td>A reusable, transparent pipeline for experiments on code-mixed sentiment and text-plus-voice fusion.</td></tr>
+</table>
+<p class="small">These are intended applications for the prototype. tarangAI has not been deployed or validated for any of them, and it is not a clinical or diagnostic tool (see Section 9).</p>
+
+<!-- ===================== SYSTEM DESIGN ===================== -->
+<h2>4. System design</h2>
+<p>Every incoming message passes through one routing function. The central design rule is that <b>voice analysis runs only on the
+English (Whisper) path</b>, because the voice model was trained on English speech. Malayalam and code-mixed audio, and typed text, skip it.</p>
+
+<figure>
+<svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+  <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5b6475"/></marker></defs>
+  <g stroke="#2a5fd0" stroke-width="1.5" fill="#fbf6e6">
+    <rect x="10" y="150" width="110" height="60" rx="8"/>
+    <rect x="160" y="150" width="135" height="60" rx="8"/>
+    <rect x="345" y="75" width="135" height="50" rx="8"/>
+  </g>
+  <g stroke="#0f8a7a" stroke-width="1.5" fill="#e9efd9">
+    <rect x="345" y="245" width="135" height="55" rx="8"/>
+    <rect x="525" y="150" width="145" height="60" rx="8"/>
+  </g>
+  <g stroke="#d98a1f" stroke-width="1.5" fill="#f6e8c4">
+    <rect x="525" y="15" width="145" height="55" rx="8"/>
+    <rect x="715" y="75" width="120" height="55" rx="8"/>
+  </g>
+  <g stroke="#555" stroke-width="1.5" fill="#efe6cb"><rect x="715" y="175" width="120" height="60" rx="8"/></g>
+  <g text-anchor="middle" fill="#1b1f2a">
+    <text x="65" y="176">Telegram user</text><text x="65" y="193" font-size="10.5" fill="#5b6475">voice or text</text>
+    <text x="227" y="172">Groq Whisper</text><text x="227" y="189" font-size="10.5" fill="#5b6475">language check</text>
+    <text x="412" y="97">English transcript</text><text x="412" y="113" font-size="10.5" fill="#5b6475">(Whisper)</text>
+    <text x="412" y="268">Sarvam Saaras</text><text x="412" y="285" font-size="10.5" fill="#5b6475">codemix STT (ml-IN)</text>
+    <text x="597" y="172">Sarvam sentiment</text><text x="597" y="189" font-size="10.5" fill="#5b6475">on original text</text>
+    <text x="597" y="39">Voice emotion model</text><text x="597" y="56" font-size="10.5" fill="#5b6475">arousal / valence</text>
+    <text x="775" y="98">Fusion</text><text x="775" y="115" font-size="10.5" fill="#5b6475">intensity + flag</text>
+    <text x="775" y="201">Telegram reply</text><text x="775" y="218" font-size="10.5" fill="#5b6475">transcript + labels</text>
+  </g>
+  <g stroke="#5b6475" stroke-width="1.6" fill="none" marker-end="url(#ar)">
+    <path d="M120,180 H160"/>
+    <path d="M295,165 L345,110"/>
+    <path d="M295,195 L345,265"/>
+    <path d="M480,105 L535,150"/>
+    <path d="M480,270 L535,208"/>
+    <path d="M670,175 L715,115"/>
+    <path d="M670,42 H715 V75"/>
+    <path d="M775,130 V175"/>
+    <path d="M670,190 H715"/>
+  </g>
+  <path d="M227,150 V42 H525" stroke="#d98a1f" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <path d="M65,210 V335 H597 V210" stroke="#5b6475" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <g font-size="10.5" fill="#5b6475">
+    <text x="300" y="132" transform="rotate(-38 300 132)">English</text>
+    <text x="298" y="238" transform="rotate(35 298 238)">not English</text>
+    <text x="330" y="36" fill="#a8680f">English audio only</text>
+    <text x="250" y="328">typed text (skips speech-to-text and voice analysis)</text>
+  </g>
+</svg>
+<div class="cap">Figure 1. System architecture. Solid arrows: voice. Dashed orange: audio sent to the voice model, English only. Dashed grey: typed text.</div>
+</figure>
+
+<h3>4.1 Components</h3>
+<table>
+<tr><th style="width:24%">Stage</th><th style="width:38%">Choice</th><th>Why</th></tr>
+<tr><td>English speech-to-text and language check</td><td>Groq-hosted <code>whisper-large-v3</code></td><td>Fast, free-tier friendly, accurate on English. Used only for "is this English?" and English transcripts.</td></tr>
+<tr><td>Malayalam / code-mixed speech-to-text</td><td>Sarvam <code>saaras:v3</code>, codemix mode, <code>ml-IN</code></td><td>Built for Indian languages. Whisper is never trusted for Malayalam: it often mislabels it as another language.</td></tr>
+<tr><td>Sentiment, emotion, intensity, sarcasm</td><td>Sarvam <code>sarvam-105b-conversations</code></td><td>One short call returning a constrained line such as <code>negative|anger|strong|no</code>.</td></tr>
+<tr><td>Voice emotion (English only)</td><td><code>audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim</code></td><td>Outputs arousal, valence and dominance from raw audio. Dimensional output transfers better than fixed emotion words.</td></tr>
+<tr><td>Interface</td><td>Telegram bot (python-telegram-bot)</td><td>Voice notes are native to Telegram; no app to build.</td></tr>
+</table>
+<div class="cap">Table 1. Components and rationale. The speech-to-text routing was adapted from Sahayi, an earlier project by Adithyan RS and collaborators (reference 7).</div>
+
+<h3>4.2 Output fields</h3>
+<table>
+<tr><th style="width:20%">Field</th><th style="width:38%">Values</th><th>Source</th></tr>
+<tr><td>Sentiment</td><td>positive · negative · neutral</td><td>Sarvam chat model</td></tr>
+<tr><td>Emotion</td><td>joy, love, surprise, sadness, anger, fear, disgust, none</td><td>Sarvam chat model</td></tr>
+<tr><td>Intensity</td><td>mild · moderate · strong</td><td>Sarvam, then possibly adjusted by voice</td></tr>
+<tr><td>Sarcasm</td><td>yes · no</td><td>Sarvam chat model</td></tr>
+<tr><td>Voice arousal / valence</td><td>about 0 to 1, shown as low / mid / high</td><td>Hugging Face voice model (English audio only)</td></tr>
+</table>
+<div class="cap">Table 2. Every field comes from a closed list, so outputs are comparable between runs and cannot drift into free text.</div>
+
+<!-- ===================== METHODOLOGY ===================== -->
+<h2>5. Methodology</h2>
+<h3>5.1 Language-aware speech routing</h3>
+<p>A single Whisper call listens first. If it reports English, its transcript is used and Sarvam is never called. Anything else goes
+to Sarvam Saaras in code-mix mode. Audio longer than 28 seconds uses Sarvam's batch API, because the real-time endpoint has a 30-second limit.
+Voice notes arrive as OGG/Opus and are handled without writing the audio to disk.</p>
+
+<h3>5.2 Sentiment on the original text</h3>
+<p>The first design translated code-mixed text to English before classifying it. We dropped that step: translation costs an extra model call
+and can erase exactly the slang, tone and sarcasm the classifier needs. The prompt tells the model that the input may be English,
+Malayalam or a mixture in native or Latin script, and asks for one line of four fields separated by <code>|</code>. The reply is parsed against closed lists, with
+safe defaults for any field that fails to parse; if no valid sentiment is found, the step reports an error instead of guessing.</p>
+
+<h3>5.3 Voice emotion model</h3>
+<p>The audEERING wav2vec2 model (references 2 and 3), fine-tuned on the English MSP-Podcast corpus (reference 4), takes a 16 kHz waveform and regresses three dimensions in
+roughly the range 0 to 1: <b>arousal</b> (calm to energetic), <b>valence</b> (negative to positive) and <b>dominance</b>. Clips under 1 second are rejected
+as unreliable, and clips over 30 seconds are cut to the first 30. The model loads once at startup. If it fails to load, voice analysis switches itself off and the rest of the bot keeps working.</p>
+
+<h3>5.4 Fusion rules</h3>
+<p>The text labels are the source of truth and are <b>never changed</b> by voice. Voice may only do two things, and both are shown to the user.</p>
+<table>
+<tr><th style="width:34%">Condition</th><th>Effect</th></tr>
+<tr><td>Voice arousal high</td><td>Raise text intensity by one step (mild → moderate → strong)</td></tr>
+<tr><td>Voice arousal low</td><td>Lower text intensity by one step</td></tr>
+<tr><td>Text positive, voice valence low</td><td>Flag: "Words sound positive but the voice sounds negative"</td></tr>
+<tr><td>Text negative, voice valence high</td><td>Flag: "Words sound negative but the voice sounds positive"</td></tr>
+</table>
+<div class="cap">Table 3. Fusion rules. The cut-offs for "low" and "high" come from the calibration in Section 6.</div>
+
+<!-- ===================== CALIBRATION ===================== -->
+<h2>6. Calibration of the voice cut-offs</h2>
+<p>Raw arousal and valence are continuous scores, and what counts as "high" depends on the speaker and microphone. Rather than guess
+thresholds, we built a small Streamlit tool with a guided 25-clip script. Part A is neutral sentences said three ways (calm, normal, loud
+and urgent). Part B is negative and positive sentences said with a clearly unhappy or happy tone. The tool averages the clips for each
+intended level, places each cut-off halfway between neighbouring averages, and refuses to suggest values if the class means are out of order.</p>
+<table>
+<tr><th>Dimension</th><th>Low mean (n=5)</th><th>Mid mean (n=15)</th><th>High mean (n=5)</th><th>Cut-offs set (low / high)</th></tr>
+<tr><td>Arousal</td><td>0.275 (sd 0.054)</td><td>0.471 (sd 0.122)</td><td>0.735 (sd 0.076)</td><td><b>0.373 / 0.603</b></td></tr>
+<tr><td>Valence</td><td>0.282 (sd 0.079)</td><td>0.401 (sd 0.081)</td><td>0.714 (sd 0.162)</td><td><b>0.342 / 0.557</b></td></tr>
+</table>
+<div class="cap">Table 4. Calibration results: 25 clips from one speaker, one microphone. Means are in the expected order for both dimensions.</div>
+<div class="box warn"><b>Caveat.</b> The mid-arousal clips vary widely (sd 0.12), so labels near the cut-offs are noisy. The values fit one voice and one
+microphone; another speaker may land elsewhere on the scale. Voice scores are therefore treated as an indicative second signal, not a verdict.</div>
+
+<!-- ===================== EXPERIMENTS ===================== -->
+<h2>7. Experiments and results</h2>
+<p>All experiments below are small, manual checks. They show that components work and expose failure modes; they are
+<b>not</b> a statistical evaluation, and no accuracy percentage is claimed.</p>
+
+<h3>7.1 Live test: English voice notes in Telegram</h3>
+<p>The author recorded five English voice notes in Telegram and sent them to the bot. Figures 2 and 3 show the replies.</p>
+<table>
+<tr><th>What was said</th><th>Sentiment · emotion</th><th>Intensity</th><th>Arousal</th><th>Valence</th><th>Fusion outcome</th></tr>
+<tr><td>"I'm so happy with how today turned out."</td><td class="pos">positive · joy</td><td>moderate</td><td>0.57 mid</td><td>0.60 high</td><td>no change</td></tr>
+<tr><td>"I can't believe they cancelled my order again."</td><td class="neg">negative · anger</td><td>strong</td><td>0.72 high</td><td>0.27 low</td><td>no change (already strong)</td></tr>
+<tr><td>"I miss my family so much right now."</td><td class="neg">negative · sadness</td><td>strong → moderate</td><td>0.34 low</td><td>0.46 mid</td><td>intensity lowered: calm voice</td></tr>
+<tr><td>"Oh great, another delay. Just what I needed." (sarcastic)</td><td class="neg">negative · anger · sarcasm</td><td>strong</td><td>0.71 high</td><td>0.69 high</td><td><b>flag: words negative, voice positive</b></td></tr>
+<tr><td>"The meeting is at 5."</td><td class="neu">neutral · none</td><td>mild → moderate</td><td>0.67 high</td><td>0.45 mid</td><td>intensity raised: energetic voice</td></tr>
+</table>
+<div class="cap">Table 5. Live results. Transcripts were exact in all five. End-to-end time per note was 1.3 to 2.4 seconds (from the bot's logs).</div>
+
+<div class="figrow">
+<figure><img src="fig_results.png" alt="Telegram replies for angry, sad and sarcastic voice notes"><div class="cap">Figure 2. Replies to the happy, angry, sad and sarcastic notes. Note "intensity adjusted by voice" on the sad clip and the "words and voice disagree" flag on the sarcastic one.</div></figure>
+<figure><img src="fig_neutral_intensity.png" alt="Telegram replies for neutral, happy and angry voice notes"><div class="cap">Figure 3. Neutral clip with intensity raised by an energetic voice (mild to moderate), followed by the happy and angry notes.</div></figure>
+</div>
+
+<h3>7.2 The sarcasm case</h3>
+<p>The sarcastic note is the clearest demonstration of the fusion idea. The language model read the words correctly as negative, anger and
+sarcasm. The voice model independently reported a <i>positive-sounding</i> voice (valence 0.69), so the bot added the disagreement flag. Neither signal
+alone says "sarcasm" as convincingly as the pair does. This is one example from one speaker, not evidence of general sarcasm detection.</p>
+
+<h3>7.3 Speech-to-text paths agree on clean speech</h3>
+<p>To check that the two STT paths behave consistently, we generated three English clips with Windows text-to-speech, encoded them as
+Telegram-style Opus, and sent each through both the Sarvam path and the Whisper path.</p>
+<table>
+<tr><th>Clip</th><th>Sarvam transcript</th><th>Whisper transcript</th><th>Sentiment (both)</th></tr>
+<tr><td>happy</td><td>"I am so happy with how today turned out. This is wonderful news. Thank you."</td><td>"I am so happy with how today turned out. This is wonderful news, thank you."</td><td class="pos">positive · joy · strong</td></tr>
+<tr><td>neutral</td><td>"The meeting is at 5:00 in the main hall."</td><td>"The meeting is at 5 o'clock in the main hall."</td><td class="neu">neutral · none · mild</td></tr>
+<tr><td>angry</td><td>"I can't believe they cancelled my order again. This is the worst service ever."</td><td>(identical)</td><td class="neg">negative · anger · strong</td></tr>
+</table>
+<div class="cap">Table 6. Both paths produce equivalent transcripts and identical sentiment on clean synthetic speech. Real, noisy, accented speech was not compared this way.</div>
+
+<h3>7.4 Typed text: Malayalam script, Manglish and English</h3>
+<p>Eight typed samples were sent straight to the sentiment step. All outputs parsed and were plausible.</p>
+<table>
+<tr><th>Input</th><th>Sentiment</th><th>Emotion</th><th>Intensity</th><th>Sarcasm</th></tr>
+<tr><td>My day has been good so far.</td><td class="pos">positive</td><td>joy</td><td>mild</td><td>no</td></tr>
+<tr><td>movie poli aanu, climax mass</td><td class="pos">positive</td><td>joy</td><td>moderate</td><td>no</td></tr>
+<tr><td>ഇന്ന് ഒരു മോശം ദിവസമായിരുന്നു</td><td class="neg">negative</td><td>sadness</td><td>strong</td><td>no</td></tr>
+<tr><td>wow great, the bus broke down again, thanks a lot</td><td class="neg">negative</td><td>anger</td><td>strong</td><td><b>yes</b></td></tr>
+<tr><td>this is the worst bus service ever</td><td class="neg">negative</td><td>anger</td><td>strong</td><td>no</td></tr>
+<tr><td>ഇന്ന് ക്ലാസ് ഉണ്ട്</td><td class="neu">neutral</td><td>none</td><td>mild</td><td>no</td></tr>
+<tr><td>enthina ee padam kandathu, time poyi</td><td class="neg">negative</td><td>anger</td><td>moderate</td><td>no</td></tr>
+<tr><td>ammaye orth ipol karachil varunnu</td><td class="neg">negative</td><td>sadness</td><td>strong</td><td>no</td></tr>
+</table>
+<div class="cap">Table 7. Multi-field output on English, Malayalam script and Manglish. Expected labels were judged by the author, not taken from a labelled dataset.</div>
+
+<h3>7.5 Robustness to short or ambiguous input</h3>
+<p>Voice notes sometimes yield very short or odd transcripts. We tested twelve such inputs to check that the classifier does not fall back on
+a negative default (our prompt contains one worked example, which can bias a model). It did not: "hello", "ok", "hmm", "testing testing one two three",
+"you" and "I don't know what to say" all returned <i>neutral</i>; "I just got the job offer!" and "Thank you so much, that really helped." returned <i>positive · joy</i>;
+"I'm bored." returned <i>negative · sadness · mild</i>. Removing the example from the prompt gave the same sentiment on every input, with only small changes in emotion and intensity.</p>
+
+<h3>7.6 What text-only analysis cannot do</h3>
+<figure style="max-width:62mm; margin-left:auto; margin-right:auto;"><img src="fig_text_only.png" alt="Same sentence repeated, text-only output"><div class="cap">Figure 4. The same sentence, "I'm fine, everything is great", sent several times in a row. Without voice analysis the bot returns the same reading each time (negative · sadness · sarcasm), differing only in intensity.</div></figure>
+<p>This screenshot was taken before the voice step was active for the author's English notes, so it is effectively the <b>text-only baseline</b>.
+The transcripts are all correct; the sentiment is the same because the words are the same. It illustrates the motivation directly: when the words do not
+change, a text classifier cannot see tone. The intensity wobbling between mild, moderate and strong across repeats also shows that intensity from a language model
+alone is unstable, one reason the voice cue is used to adjust it.</p>
+
+<!-- ===================== CHALLENGES ===================== -->
+<h2>8. Challenges and lessons</h2>
+<ul>
+<li><b>Silent fallback hid a configuration error.</b> English voice notes were being routed to Sarvam because the Groq key was set under a different variable name
+(<code>GROQ_API_KEY_3</code>) and the Whisper failure was swallowed. The symptom was that the voice-analysis lines never appeared. Fixes: accept all three key names with failover, and log a warning when the Whisper check fails.</li>
+<li><b>Model names and parameters change.</b> The first Sarvam model, <code>sarvam-m</code>, has been deprecated, and the documentation summary suggested a reasoning setting (<code>none</code>) that
+the live API rejects with a 400 error. Probing the real endpoint showed that the larger model also spent small token budgets on hidden reasoning and returned empty answers; the <code>-conversations</code> variant answers directly. Lesson: test the live API, do not rely on documentation alone.</li>
+<li><b>Library drift.</b> The voice model's published example code failed under transformers 5.x until a single call was changed to <code>post_init()</code>.</li>
+<li><b>Translation was the wrong abstraction.</b> An early design normalised code-mixed text to English first. Removing it simplified the pipeline and avoided losing tone.</li>
+<li><b>Debuggability.</b> An opt-in debug log (<code>DEBUG_TRANSCRIPTS=1</code>) prints transcripts, labels and voice scores. It is off by default because transcripts are private messages.</li>
+</ul>
+
+<h2>9. Limitations and ethics</h2>
+<h3>Limitations</h3>
+<ul>
+<li><b>No formal evaluation.</b> Results come from manual spot checks. There is no labelled test set, so no accuracy or F1 is reported.</li>
+<li><b>The voice model is English-trained</b> (MSP-Podcast) and is deliberately not applied to Malayalam or code-mixed audio, where its behaviour is unknown.</li>
+<li><b>Calibration covers one speaker and one microphone</b> with 25 clips. Other voices, accents and noisy rooms may shift the scores.</li>
+<li><b>Intensity and sarcasm are the least reliable fields</b>; the sentiment label is the most dependable output.</li>
+<li><b>Language coverage.</b> Sarvam STT is configured for Malayalam (<code>ml-IN</code>), so Hindi-English speech is not supported.</li>
+<li><b>Language-model subjectivity.</b> Sentiment from an LLM can disagree with human annotators, especially on mixed feelings.</li>
+</ul>
+<h3>Ethics and privacy</h3>
+<ul>
+<li><b>Not a clinical tool.</b> The bot estimates tone in a message; it does not assess mental health, and its outputs must not be used for diagnosis or for decisions about people.</li>
+<li><b>Private data.</b> Voice notes and transcripts are personal. The bot does not store audio or transcripts, and logs them only when debugging is switched on. Audio and text are however processed by third-party services (Telegram, Groq, Sarvam) under their own policies, so users should be told this and consent.</li>
+<li><b>Transparency.</b> Every adjustment made by voice is shown in the reply, and the text labels are never silently overridden.</li>
+<li><b>Bias.</b> Emotion models trained on acted or English podcast speech can under-perform for some accents and speakers. This is a real risk for Malayalam-accented English.</li>
+<li><b>Licence.</b> The voice model is released under CC BY-NC-SA 4.0 for research use. This project is therefore non-commercial unless the model is replaced or licensed.</li>
+</ul>
+
+<h2>10. Future work and conclusion</h2>
+<h3>Future work</h3>
+<ul>
+<li>Run a <b>labelled evaluation</b>: score the sentiment field (macro-F1 and a confusion matrix) on a public code-mixed Malayalam-English sentiment dataset such as Dravidian-CodeMix (reference 5; Roman-script YouTube comments, about 4,850 training and 1,350 test comments in the FIRE 2020 release). Its label set includes "mixed feelings" and "unknown" classes, so a mapping to our three classes is needed. The data is text only, so it would test the text path, not the voice path. Compare raw text against a translated baseline too.</li>
+<li>Evaluate on <b>real, noisy, multi-speaker</b> recordings, and calibrate per user with a short baseline.</li>
+<li>Find or fine-tune a <b>voice-emotion model for Malayalam</b> and code-mixed speech so voice cues are available on every path.</li>
+<li>Replace the model's self-reported confidence with token probabilities where the API exposes them.</li>
+<li>Add opt-in conversation history so trends over time, not just single messages, can be reported.</li>
+</ul>
+<h3>Conclusion</h3>
+<p>tarangAI shows that a small, inspectable pipeline can combine speech recognition, a language model and a speech-emotion model into a useful reading of
+code-mixed voice notes. Its main design choices (language-aware routing, no translation, closed-vocabulary outputs, and a fusion layer that adjusts intensity and flags
+disagreements without overriding the words) all came from problems met while building it. Live tests confirmed correct transcripts and labels on English voice notes and a working
+words-versus-voice flag on a sarcastic sentence. The honest next step is a labelled evaluation, which would turn these promising demonstrations into measured results.</p>
+
+<h2>References and resources</h2>
+<ol class="small">
+<li>Radford, A., Kim, J. W., Xu, T., Brockman, G., McLeavey, C. and Sutskever, I. (2023). Robust Speech Recognition via Large-Scale Weak Supervision (Whisper). <i>Proceedings of the 40th International Conference on Machine Learning</i>, PMLR 202:28492–28518. arXiv:2212.04356. Used here through Groq's API (console.groq.com).</li>
+<li>Wagner, J. et al. (2023). Dawn of the transformer era in speech emotion recognition: closing the valence gap. <i>IEEE Transactions on Pattern Analysis and Machine Intelligence</i>. arXiv:2203.07378. The paper behind the audEERING dimensional emotion model.</li>
+<li>audEERING. <i>wav2vec2-large-robust-12-ft-emotion-msp-dim</i>. Hugging Face model card: arousal, dominance and valence; fine-tuned on MSP-Podcast; English; CC BY-NC-SA 4.0 (research use). <a href="https://huggingface.co/audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim">huggingface.co/audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim</a></li>
+<li>Lotfian, R. and Busso, C. (2019). Building Naturalistic Emotionally Balanced Speech Corpus by Retrieving Emotional Speech from Existing Podcast Recordings (the MSP-Podcast corpus). <i>IEEE Transactions on Affective Computing</i>. DOI 10.1109/TAFFC.2017.2736999.</li>
+<li>Chakravarthi, B. R. et al. (2022). DravidianCodeMix: Sentiment Analysis and Offensive Language Identification Dataset for Dravidian Languages in Code-Mixed Text. <i>Language Resources and Evaluation</i>. arXiv:2106.09460. See also the FIRE 2020 Dravidian-CodeMix shared task: <a href="https://competitions.codalab.org/competitions/25215">competitions.codalab.org/competitions/25215</a>.</li>
+<li>Sarvam AI. API documentation: chat completions and speech-to-text (Saaras). <a href="https://docs.sarvam.ai/api-reference-docs/chat/completions">docs.sarvam.ai</a></li>
+<li>Sahayi, an earlier project by Adithyan RS and collaborators (BIA GenAI Hackathon 2026). <a href="https://github.com/adi5022/sahayiAI">github.com/adi5022/sahayiAI</a>. Source of the speech-to-text routing that tarangAI adapts.</li>
+<li>python-telegram-bot, Streamlit, PyTorch and Hugging Face Transformers documentation.</li>
+<li>tarangAI source code: <a href="https://github.com/adi5022/tarangAI">github.com/adi5022/tarangAI</a></li>
+</ol>
+<p class="small">Bibliographic details were checked against online sources (arXiv, PMLR, the Hugging Face model card and the shared-task page) in November 2026. Volume and page numbers are omitted where they could not be confirmed.</p>
+
+</body>
+</html>
