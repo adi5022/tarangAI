@@ -1,22 +1,25 @@
-"""Sentiment engine. Takes clean English text and returns label, confidence and a short reason.
+"""Sentiment engine: one short call that returns a single label word.
 
-Kept separate from normalisation so it can later be swapped for a dedicated model."""
-from .sarvam_llm import chat_json
+Input is the ORIGINAL text (English, Malayalam, or code-mixed; native script or romanized), with
+no translation, so slang, tone and sarcasm are not lost. max_tokens is tiny and reasoning is off,
+so the model can only answer with the label."""
+from .sarvam_llm import chat
 
 LABELS = ("positive", "negative", "neutral")
 
-SYSTEM = """You are a sentiment classifier. Classify the sentiment of the given English text.
-Return ONLY a JSON object: {"label": "positive" | "negative" | "neutral", "confidence": 0.0-1.0,
-"reason": "one short sentence"}. Treat sarcasm by its intended meaning. Mixed sentiment -> the dominant one."""
+SYSTEM = (
+    "Classify the sentiment of the user's text. It may be English, Malayalam, or a mix of both, "
+    "in Malayalam script or romanized (Manglish); read it as written, including slang and emoji. "
+    "Answer with exactly one word: "
+    "positive, negative, or neutral. Judge sarcasm by its intended meaning. "
+    "For mixed sentiment, answer with the dominant one. No other text."
+)
 
 
-def classify_sentiment(english_text: str) -> dict:
-    out = chat_json(SYSTEM, english_text)
-    label = str(out.get("label", "neutral")).lower().strip()
-    if label not in LABELS:
-        label = "neutral"
-    try:
-        conf = max(0.0, min(1.0, float(out.get("confidence", 0.5))))
-    except (TypeError, ValueError):
-        conf = 0.5
-    return {"label": label, "confidence": conf, "reason": str(out.get("reason", "")).strip()}
+def classify_sentiment(english_text: str) -> str:
+    """Returns 'positive' | 'negative' | 'neutral'. Raises if the model gives no valid label."""
+    raw = chat(SYSTEM, english_text, temperature=0.0, max_tokens=8).lower()
+    for label in LABELS:
+        if label in raw:
+            return label
+    raise ValueError(f"Unexpected sentiment output: {raw!r}")

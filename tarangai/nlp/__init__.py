@@ -1,4 +1,4 @@
-from .analyze import normalize
+from .sentiment import classify_sentiment
 
-__all__ = ["normalize"]
-# sentiment.py exists but is intentionally not wired in yet
+__all__ = ["classify_sentiment"]
+# analyze.normalize (translation) still exists but is not used in the pipeline

@@ -17,9 +17,10 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 WELCOME = (
     "Hi, I'm tarangAI.\n\n"
     "Send me a voice note or text in English or Malayalam-English (mixed) and I'll "
-    "transcribe it and give you the clean English version."
+    "transcribe it and tell you the sentiment."
 )
 ERROR = "Sorry, something went wrong on my side. Please try again."
+ICON = {"positive": "🟢", "negative": "🔴", "neutral": "⚪"}
 
 
 def format_reply(out: dict) -> str:
@@ -29,11 +30,9 @@ def format_reply(out: dict) -> str:
     if out["error"]:
         lines.append(f"⚠️ {out['error']}")
         return "\n".join(lines)
-    lines.append(f"🌐 Language: {out['language'] or '-'}")
-    if out["english"] and out["english"] != out["transcript"]:
-        lines.append(f"🔤 English: {out['english']}")
-    if out["notes"]:
-        lines.append(f"📝 Notes: {out['notes']}")
+    if out["language"]:  # known for voice only
+        lines.append(f"🌐 Language: {out['language']}")
+    lines.append(f"{ICON[out['sentiment']]} Sentiment: {out['sentiment']}")
     lines.append(f"⏱ {out['seconds']}s")
     return "\n".join(lines)
 
@@ -46,7 +45,8 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE, **kw) -> Non
         logging.exception("pipeline failed")
         await update.effective_message.reply_text(ERROR)
         return
-    logging.info("lang=%s provider=%s %ss", out["language"] or "-", out["provider"] or "-", out["seconds"])
+    logging.info("lang=%s sentiment=%s provider=%s %ss", out["language"] or "-", out["sentiment"] or "-",
+                 out["provider"] or "-", out["seconds"])
     await update.effective_message.reply_text(format_reply(out))
 
 
